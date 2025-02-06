@@ -1,5 +1,3 @@
-import psycopg2
-
 def cadastroCliente(cur, conn):
     nome = input('Nome: ')
     cpf = int(input("Cpf: "))
@@ -32,9 +30,17 @@ def telaExcluirCadastro(cur, conn, cpf):
     escolha = int(input("Tem certeza que deseja excluir seu cadastro? (0 para não 1 para sim): "))
     if(escolha == 1):
         senha = input("Digite sua senha: ")
-        cur.execute("DELETE FROM Cliente WHERE Cpf = %s AND senha = %s;", (cpf, senha))
-        conn.commit()
-        print("Cadastro excluido com sucesso")
+        cur.execute("""
+            SELECT * FROM Cliente WHERE Cpf = %s
+        """, (cpf,))
+        cliente = cur.fetchone()
+        if cliente[2] == senha:
+            cur.execute("DELETE FROM Cliente WHERE Cpf = %s AND senha = %s;", (cpf, senha))
+            conn.commit()
+            print("Cadastro excluido com sucesso")
+        else:
+            print("Senha incorreta")
+        
     else:
         return
 
@@ -90,7 +96,7 @@ def telaAlterarDados(cur, conn, cpf):
 
 def telaClienteAcesso(cur, conn, cpf):
     while True:  
-        print("\n=== Bem-vindo Cliente ===")
+        print("\n=== Bem-vindo - Cliente ===")
         print("1. Comprar")
         print("2. Histórico")
         print("3. Alterar dados")
@@ -108,6 +114,7 @@ def telaClienteAcesso(cur, conn, cpf):
             telaAlterarDados(cur, conn, cpf)
         elif escolha == "4":
             telaExcluirCadastro(cur, conn, cpf)
+            break
         elif escolha == "5":
             break  
         else:

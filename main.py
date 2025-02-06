@@ -1,4 +1,5 @@
-import Telas
+import TelasCliente
+import TelasGerente
 import psycopg2
 
 conn = psycopg2.connect(
@@ -20,9 +21,9 @@ while True:
         escolha = input("Escolha uma opção: ")
 
         if escolha == "1":
-            Telas.telaCliente(cur, conn)
+            TelasCliente.telaCliente(cur, conn)
         elif escolha == "2":
-            print("\nVocê entrou como Gerente.\n")
+            TelasGerente.telaGerente(cur, conn)
         elif escolha == "3":
             print("\nVocê entrou como Atendente.\n")
         elif escolha == "4":
