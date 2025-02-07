@@ -1,23 +1,28 @@
 def cadastroCliente(cur, conn):
     nome = input('Nome: ')
-    cpf = int(input("Cpf: "))
+    cpf = int(input("CPF: ") ) # Mantém como string
     senha = input("Senha: ")
 
-    cur.execute("""
-        SELECT * FROM Cliente WHERE Cpf = %s
-    """, (cpf,))
+    try:
+        # Verifica se cliente já existe
+        cur.execute("SELECT * FROM Cliente WHERE Cpf = %s", (cpf,))
+        cliente = cur.fetchone()  # Tenta buscar um resultado
 
-    cliente = cur.fetchone()
-    if cliente:
-        print("Cliente já cadastrado!")
-        return
+        if cliente:
+            print("Cliente já cadastrado!")
+            return  # Sai da função se o cliente já existir
 
-    cur.execute(f"""
-        INSERT INTO Cliente (Cpf, nome, senha)
-        VALUES ({cpf}, '{nome}', '{senha}')
-""")
-    conn.commit()
-    print("Cadastro Realizado!")
+        # Insere novo cliente
+        cur.execute("""
+            INSERT INTO Cliente (Cpf, nome, senha)
+            VALUES (%s, %s, %s)
+        """, (cpf, nome, senha))
+        conn.commit()
+        print("Cadastro Realizado!")
+
+    except Exception as e:
+        conn.rollback()  # Desfaz a transação em caso de erro
+        print(f"Erro ao cadastrar: {e}")
 
 def telaCompra(cur, conn):
     print("Lista de Produtos:")
