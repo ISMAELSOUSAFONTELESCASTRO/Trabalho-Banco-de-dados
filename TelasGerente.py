@@ -138,7 +138,6 @@ def telaContratarAtendente(cur, conn):
     print(f"Atendente cadastrado com sucesso! ID: {id_funcionario}")
 
 def telaVerEstoque(cur, conn):
-    # Exibe todos os itens do estoque
     cur.execute("SELECT Id_Produto, Nome, Preco, Quantidade_Estoque, Tipo_Produto FROM Produto")
     produtos = cur.fetchall()
 
@@ -148,28 +147,17 @@ def telaVerEstoque(cur, conn):
             print(f"ID: {produto[0]} | Nome: {produto[1]} | Preço: {produto[2]} | Estoque: {produto[3]} | Tipo: {produto[4]}")
     else:
         print("Nenhum produto no estoque.")
-
+    print("\n")
     while True:
-        # Pergunta se o usuário deseja filtrar ou sair
-        escolha = input("\nDeseja filtrar o estoque ou sair? (1 para filtrar, 2 para sair): ")
+        print("1. Filtrar por categoria")
+        print("2. Filtrar por ID")
+        print("3. Produtos mais caro/barato")
+        print("4. Produtos com menor/maior estoque")
+        print("5. Sair")
+
+        escolha = input("\nEscolha uma opção: ")
 
         if escolha == "1":
-            filtro = input("\nEscolha o tipo de filtro (ID ou Tipo): ").strip().lower()  # Tornar o filtro em minúsculas
-            if filtro == "id":
-                try:
-                    id_produto = int(input("\nDigite o ID do produto: "))
-                    cur.execute("SELECT Id_Produto, Nome, Preco, Quantidade_Estoque, Tipo_Produto FROM Produto WHERE Id_Produto = %s", (id_produto,))
-                    produto = cur.fetchone()
-
-                    if produto:
-                        print(f"\nProduto encontrado: ID: {produto[0]} | Nome: {produto[1]} | Preço: {produto[2]} | Estoque: {produto[3]} | Tipo: {produto[4]}")
-                    else:
-                        print("\nProduto não encontrado com esse ID.")
-
-                except ValueError:
-                    print("\nPor favor, insira um número válido para o ID.")
-
-            elif filtro == "tipo":
                 tipo_produto = input("\nDigite o tipo do produto: ").strip().lower()  # Remover espaços e converter para minúsculas
                 cur.execute("SELECT Id_Produto, Nome, Preco, Quantidade_Estoque, Tipo_Produto FROM Produto WHERE LOWER(TRIM(Tipo_Produto)) = %s", (tipo_produto,))
                 produtos = cur.fetchall()
@@ -179,15 +167,82 @@ def telaVerEstoque(cur, conn):
                     for produto in produtos:
                         print(f"ID: {produto[0]} | Nome: {produto[1]} | Preço: {produto[2]} | Estoque: {produto[3]} | Tipo: {produto[4]}")
                 else:
-                    print("\nTipo de produto não encontrado.")
-            else:
-                print("\nOpção inválida. Escolha 'id' ou 'tipo'.")
+                    print("\nTipo de produto não encontrado.") 
+                print("\n")
         elif escolha == "2":
-            print("\nSaindo...")
-            break
-        else:
-            print("\nOpção inválida. Digite 1 para filtrar ou 2 para sair.")
+            try:
+                    id_produto = int(input("\nDigite o ID do produto: "))
+                    cur.execute("SELECT Id_Produto, Nome, Preco, Quantidade_Estoque, Tipo_Produto FROM Produto WHERE Id_Produto = %s", (id_produto,))
+                    produto = cur.fetchone()
 
+                    if produto:
+                        print(f"\nProduto encontrado: ID: {produto[0]} | Nome: {produto[1]} | Preço: {produto[2]} | Estoque: {produto[3]} | Tipo: {produto[4]}")
+                    else:
+                        print("\nProduto não encontrado com esse ID.")
+
+            except ValueError:
+                print("\nPor favor, insira um número válido para o ID.")
+            print("\n")
+
+        elif escolha == "5":
+            break
+        
+        elif escolha == "3":  
+            cur.execute("""
+                SELECT Nome, Preco, Tipo_Produto 
+                FROM Produto 
+                WHERE Preco <= ALL (SELECT Preco FROM Produto);
+            """)
+            produto_mais_barato = cur.fetchone()
+
+            cur.execute("""
+                SELECT Nome, Preco, Tipo_Produto 
+                FROM Produto 
+                WHERE Preco >= ALL (SELECT Preco FROM Produto);
+            """)
+            produto_mais_caro = cur.fetchone()
+
+            print("\n💰 Produto Mais Barato:")
+            if produto_mais_barato:
+                print(f"Nome: {produto_mais_barato[0]} | Preço: R$ {produto_mais_barato[1]:.2f} | Tipo: {produto_mais_barato[2]}")
+            else:
+                print("Nenhum produto encontrado.")
+
+            print("\n💸 Produto Mais Caro:")
+            if produto_mais_caro:
+                print(f"Nome: {produto_mais_caro[0]} | Preço: R$ {produto_mais_caro[1]:.2f} | Tipo: {produto_mais_caro[2]}")
+            else:
+                print("Nenhum produto encontrado.")
+            print("\n")
+        
+        elif escolha == "4":     
+            cur.execute("""
+                SELECT Nome, Quantidade_Estoque, Tipo_Produto 
+                FROM Produto 
+                WHERE Quantidade_Estoque <= ALL (SELECT Quantidade_Estoque FROM Produto);
+            """)
+            produto_menor_estoque = cur.fetchone()
+            cur.execute("""
+                SELECT Nome, Quantidade_Estoque, Tipo_Produto 
+                FROM Produto 
+                WHERE Quantidade_Estoque >= ALL (SELECT Quantidade_Estoque FROM Produto);
+            """)
+            produto_maior_estoque = cur.fetchone()
+            print("\n📉 Produto com Menor Estoque:")
+            if produto_menor_estoque:
+                print(f"Nome: {produto_menor_estoque[0]} | Estoque: {produto_menor_estoque[1]} | Tipo: {produto_menor_estoque[2]}")
+            else:
+                print("Nenhum produto encontrado.")
+
+            print("\n📈 Produto com Maior Estoque:")
+            if produto_maior_estoque:
+                print(f"Nome: {produto_maior_estoque[0]} | Estoque: {produto_maior_estoque[1]} | Tipo: {produto_maior_estoque[2]}")
+            else:
+                print("Nenhum produto encontrado.")
+            print("\n")
+        else:
+            print("Opção inválida, tente novamente!")
+            
 
 def telaReporEstoque(cur, conn):
     while True:
