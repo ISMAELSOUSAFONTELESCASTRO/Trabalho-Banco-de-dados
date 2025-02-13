@@ -1,5 +1,6 @@
 import TelasCliente
 import TelasGerente
+import TelasAtendente
 import psycopg2
 
 conn = psycopg2.connect(
