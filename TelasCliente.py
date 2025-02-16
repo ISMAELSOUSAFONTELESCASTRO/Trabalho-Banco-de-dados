@@ -1,23 +1,35 @@
 def cadastroCliente(cur, conn):
     nome = input('Nome: ')
-    cpf = int(input("Cpf: "))
+    cpf = input("CPF: ")  # Mantido como string
+    # Valida se o CPF tem 11 dígitos numéricos
+    if len(cpf) != 11 or not cpf.isdigit():
+        raise ValueError("CPF inválido!")
     senha = input("Senha: ")
 
-    cur.execute("""
-        SELECT * FROM Cliente WHERE Cpf = %s
-    """, (cpf,))
+    try:
+        # Verifica se cliente já existe
+        cur.execute("SELECT * FROM Cliente WHERE Cpf = %s", (cpf,))
+        cliente = cur.fetchone()
 
-    cliente = cur.fetchone()
-    if cliente:
-        print("Cliente já cadastrado!")
-        return
+        if cliente:
+            print("Cliente já cadastrado!")
+            return
 
-    cur.execute(f"""
-        INSERT INTO Cliente (Cpf, nome, senha)
-        VALUES ({cpf}, '{nome}', '{senha}')
-""")
-    conn.commit()
-    print("Cadastro Realizado!")
+        # Insere novo cliente
+        cur.execute("""
+            INSERT INTO Cliente (Cpf, nome, senha)
+            VALUES (%s, %s, %s)
+        """, (cpf, nome, senha))
+        conn.commit()
+        print("Cadastro Realizado!")
+
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro ao cadastrar: {e}")
+
+    except Exception as e:
+        conn.rollback()  # Desfaz a transação em caso de erro
+        print(f"Erro ao cadastrar: {e}")
 
 def telaCompra(cur, conn):
     print("Lista de Produtos:")
@@ -28,35 +40,29 @@ def telaCompra(cur, conn):
 
 def telaExcluirCadastro(cur, conn, cpf):
     escolha = int(input("Tem certeza que deseja excluir seu cadastro? (0 para não 1 para sim): "))
-    if(escolha == 1):
+    if escolha == 1:
         senha = input("Digite sua senha: ")
-        cur.execute("""
-            SELECT * FROM Cliente WHERE Cpf = %s
-        """, (cpf,))
+        cur.execute("SELECT * FROM Cliente WHERE Cpf = %s", (cpf,))
         cliente = cur.fetchone()
         if cliente[2] == senha:
             cur.execute("DELETE FROM Cliente WHERE Cpf = %s AND senha = %s;", (cpf, senha))
             conn.commit()
-            print("Cadastro excluido com sucesso")
+            print("Cadastro excluído com sucesso")
         else:
             print("Senha incorreta")
-        
-    else:
-        return
 
 def acessar(cur, conn):
-    
-    cpf = int(input("Digite o CPF: "))
+    cpf = input("Digite o CPF: ")  # Mantido como string
+    # Valida formato do CPF
+    if len(cpf) != 11 or not cpf.isdigit():
+        raise ValueError("CPF inválido!")
     senha = input("Digite a Senha: ")
 
-    cur.execute("""
-        SELECT * FROM Cliente WHERE Cpf = %s
-    """, (cpf,))
-
-    cliente = cur.fetchone()  
+    cur.execute("SELECT * FROM Cliente WHERE Cpf = %s", (cpf,))
+    cliente = cur.fetchone()
 
     if cliente:
-        if cliente[2] == senha:  
+        if cliente[2] == senha:  # Supondo que senha esteja no índice 2
             telaClienteAcesso(cur, conn, cpf)
         else:
             print("Senha incorreta!")
